@@ -4,7 +4,7 @@ from pytorch_transformers.tokenization_bert import BertTokenizer
 from torch import nn
 import torch,math,logging,os
 from sklearn.metrics import f1_score, precision_score, recall_score
-
+from torch import autograd
 
 from .document_bert_architectures import DocumentBertLSTM, DocumentBertLinear, DocumentBertTransformer, DocumentBertMaxPool
 
@@ -157,7 +157,7 @@ class BertForDocumentClassification():
         document_representations, document_sequence_lengths  = encode_documents(train_documents, self.bert_tokenizer)
 
         correct_output = torch.FloatTensor(train_labels)
-
+        print(document_representations.shape, document_sequence_lengths)
         loss_weight = ((correct_output.shape[0] / torch.sum(correct_output, dim=0))-1).to(device=self.args['device'])
         self.loss_function = torch.nn.BCEWithLogitsLoss(pos_weight=loss_weight)
 
@@ -177,18 +177,21 @@ class BertForDocumentClassification():
             self.epoch = epoch
             epoch_loss = 0.0
             for i in range(0, document_representations.shape[0], self.args['batch_size']):
-
+                #with autograd.detect_anomaly():
                 batch_document_tensors = document_representations[i:i + self.args['batch_size']].to(device=self.args['device'])
                 batch_document_sequence_lengths= document_sequence_lengths[i:i+self.args['batch_size']]
+                print(batch_document_tensors)
                 #self.log.info(batch_document_tensors.shape)
                 batch_predictions = self.bert_doc_classification(batch_document_tensors,
                                                                  batch_document_sequence_lengths, device=self.args['device'])
 
                 batch_correct_output = correct_output[i:i + self.args['batch_size']].to(device=self.args['device'])
+                print(batch_predictions, batch_correct_output)
                 loss = self.loss_function(batch_predictions, batch_correct_output)
                 epoch_loss += float(loss.item())
                 #self.log.info(batch_predictions)
                 loss.backward()
+                print([self.bert_doc_classification.classifier[i].weight.grad for i in range(len(self.bert_doc_classification.classifier))])
                 self.optimizer.step()
                 self.optimizer.zero_grad()
 

@@ -1,5 +1,6 @@
 from ..document_bert import BertForDocumentClassification
 from .util import get_model_path
+import configargparse
 
 def _initialize_arguments(p: configargparse.ArgParser):
     p.add('--model_storage_directory', help='The directory caching all model runs')
@@ -7,7 +8,7 @@ def _initialize_arguments(p: configargparse.ArgParser):
 
 class GOCBert(BertForDocumentClassification):
     def __init__(self, device='cpu', batch_size=10):
-        p = configargparse.ArgParser(default_config_files=["config.ini"])
+        p = configargparse.ArgParser(default_config_files=["predict_config.ini"])
         args = _initialize_arguments(p)
         model_path = args.model_storage_directory
         

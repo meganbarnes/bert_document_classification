@@ -2,11 +2,11 @@ import sys, os, logging, torch
 
 #appends current directory to sys path allowing data imports.
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-
+sys.path.append("/home/mrbarnes/projects/bert_document_classification")
 from data import load_goc
 from sklearn.metrics import f1_score, precision_score, recall_score
 from bert_document_classification.models import GOCBert
-
+import configargparse
 
 log = logging.getLogger()
 

@@ -2,7 +2,7 @@ import sys, os, logging, torch, time, configargparse, socket
 
 #appends current directory to sys path allowing data imports.
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-
+sys.path.append("/home/mrbarnes/projects/bert_document_classification")
 from bert_document_classification.document_bert import BertForDocumentClassification
 from data import load_goc
 
