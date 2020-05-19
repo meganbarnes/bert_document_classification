@@ -1,4 +1,5 @@
-from pytorch_transformers.modeling_bert import BertPreTrainedModel, BertConfig, BertModel
+# from pytorch_transformers.modeling_bert import BertPreTrainedModel, 
+from transformers import DistilBertConfig, DistilBertModel
 from torch import nn
 import torch
 from .transformer import TransformerEncoderLayer, TransformerEncoder
@@ -9,9 +10,9 @@ class DocumentBertLSTM(BertPreTrainedModel):
     BERT output over document in LSTM
     """
 
-    def __init__(self, bert_model_config: BertConfig):
+    def __init__(self, bert_model_config: DistilBertConfig):
         super(DocumentBertLSTM, self).__init__(bert_model_config)
-        self.bert = BertModel(bert_model_config)
+        self.bert = DistilBertModel(bert_model_config)
         self.bert_batch_size= self.bert.config.bert_batch_size
         self.dropout = nn.Dropout(p=bert_model_config.hidden_dropout_prob)
         self.lstm = LSTM(bert_model_config.hidden_size,bert_model_config.hidden_size)
@@ -70,9 +71,9 @@ class DocumentBertLinear(BertPreTrainedModel):
     BERT output over document into linear layer
     """
 
-    def __init__(self, bert_model_config: BertConfig):
+    def __init__(self, bert_model_config: DistilBertConfig):
         super(DocumentBertLinear, self).__init__(bert_model_config)
-        self.bert = BertModel(bert_model_config)
+        self.bert = DistilBertModel(bert_model_config)
         self.bert_batch_size= self.bert.config.bert_batch_size
         self.dropout = nn.Dropout(p=bert_model_config.hidden_dropout_prob)
 
@@ -127,9 +128,9 @@ class DocumentBertMaxPool(BertPreTrainedModel):
     BERT output over document into linear layer
     """
 
-    def __init__(self, bert_model_config: BertConfig):
+    def __init__(self, bert_model_config: DistilBertConfig):
         super(DocumentBertMaxPool, self).__init__(bert_model_config)
-        self.bert = BertModel(bert_model_config)
+        self.bert = DistilBertModel(bert_model_config)
         self.bert_batch_size= self.bert.config.bert_batch_size
         self.dropout = nn.Dropout(p=bert_model_config.hidden_dropout_prob)
 
@@ -188,9 +189,9 @@ class DocumentBertTransformer(BertPreTrainedModel):
     BERT -> TransformerEncoder -> Max over attention output.
     """
 
-    def __init__(self, bert_model_config: BertConfig):
+    def __init__(self, bert_model_config: DistilBertConfig):
         super(DocumentBertTransformer, self).__init__(bert_model_config)
-        self.bert = BertModel(bert_model_config)
+        self.bert = DistilBertModel(bert_model_config)
         self.bert_batch_size= self.bert.config.bert_batch_size
         self.dropout = nn.Dropout(p=bert_model_config.hidden_dropout_prob)
 

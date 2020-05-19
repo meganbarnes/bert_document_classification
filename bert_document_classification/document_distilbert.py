@@ -1,14 +1,14 @@
-from pytorch_transformers.modeling_bert import BertPreTrainedModel, BertConfig, BertModel
-from pytorch_transformers.modeling_utils import WEIGHTS_NAME, CONFIG_NAME
-from pytorch_transformers.tokenization_bert import BertTokenizer
+# from pytorch_transformers.modeling_bert import BertPreTrainedModel
+from transformers import DistilBertConfig, DistilBertModel
+from transformers import WEIGHTS_NAME, CONFIG_NAME
+from transformers import DistilBertTokenizer
 from torch import nn
 import torch,math,logging,os
 from sklearn.metrics import f1_score, precision_score, recall_score
 
+from .document_distilbert_architectures import DocumentBertLSTM, DocumentBertLinear, DocumentBertTransformer, DocumentBertMaxPool
 
-from .document_bert_architectures import DocumentBertLSTM, DocumentBertLinear, DocumentBertTransformer, DocumentBertMaxPool
-
-def encode_documents(documents: list, tokenizer: BertTokenizer, max_input_length=512):
+def encode_documents(documents: list, tokenizer: DistilBertTokenizer, max_input_length=512):
     """
     Returns a len(documents) * max_sequences_per_document * 3 * 512 tensor where len(documents) is the batch
     dimension and the others encode bert input.
@@ -104,19 +104,19 @@ class BertForDocumentClassification():
         assert self.args['labels'] is not None, "Must specify all labels in prediction"
 
         self.log = logging.getLogger()
-        self.bert_tokenizer = BertTokenizer.from_pretrained(self.args['bert_model_path'])
+        self.bert_tokenizer = DistilBertTokenizer.from_pretrained(self.args['bert_model_path'])
 
 
         #account for some random tensorflow naming scheme
         if os.path.exists(self.args['bert_model_path']):
             if os.path.exists(os.path.join(self.args['bert_model_path'], CONFIG_NAME)):
-                config = BertConfig.from_json_file(os.path.join(self.args['bert_model_path'], CONFIG_NAME))
+                config = DistilBertConfig.from_json_file(os.path.join(self.args['bert_model_path'], CONFIG_NAME))
             elif os.path.exists(os.path.join(self.args['bert_model_path'], 'bert_config.json')):
-                config = BertConfig.from_json_file(os.path.join(self.args['bert_model_path'], 'bert_config.json'))
+                config = DistilBertConfig.from_json_file(os.path.join(self.args['bert_model_path'], 'bert_config.json'))
             else:
                 raise ValueError("Cannot find a configuration for the BERT based model you are attempting to load.")
         else:
-            config = BertConfig.from_pretrained(self.args['bert_model_path'])
+            config = DistilBertConfig.from_pretrained(self.args['bert_model_path'])
         config.__setattr__('num_labels',len(self.args['labels']))
         config.__setattr__('bert_batch_size',self.args['bert_batch_size'])
 
