@@ -1,23 +1,23 @@
-# from pytorch_transformers.modeling_bert import BertPreTrainedModel, 
-from transformers import DistilBertConfig, DistilBertModel
+from pytorch_transformers.modeling_bert import BertPreTrainedModel
+from transformers import DistilBertConfig, DistilBertModel, PretrainedConfig, PreTrainedModel
 from torch import nn
 import torch
 from .transformer import TransformerEncoderLayer, TransformerEncoder
 
 from torch.nn import LSTM
-class DocumentBertLSTM(BertPreTrainedModel):
+class DocumentBertLSTM(DistilBertModel):
     """
     BERT output over document in LSTM
     """
 
-    def __init__(self, bert_model_config: DistilBertConfig):
+    def __init__(self, bert_model_config: PretrainedConfig):
         super(DocumentBertLSTM, self).__init__(bert_model_config)
-        self.bert = DistilBertModel(bert_model_config)
-        self.bert_batch_size= self.bert.config.bert_batch_size
-        self.dropout = nn.Dropout(p=bert_model_config.hidden_dropout_prob)
+        self.bert = DistilBertModel.from_pretrained("/home/mrbarnes/bluebert/bluebert_train_output/")
+        self.bert_batch_size= bert_model_config.bert_batch_size
+        self.dropout = nn.Dropout(p=bert_model_config.dropout)
         self.lstm = LSTM(bert_model_config.hidden_size,bert_model_config.hidden_size)
         self.classifier = nn.Sequential(
-            nn.Dropout(p=bert_model_config.hidden_dropout_prob),
+            nn.Dropout(p=bert_model_config.dropout),
             nn.Linear(bert_model_config.hidden_size, bert_model_config.num_labels),
             nn.Tanh()
         )
@@ -35,9 +35,10 @@ class DocumentBertLSTM(BertPreTrainedModel):
         #this means that we are possibly cutting off the last part of documents.
 
         for doc_id in range(document_batch.shape[0]):
-            bert_output[doc_id][:self.bert_batch_size] = self.dropout(self.bert(document_batch[doc_id][:self.bert_batch_size,0],
-                                            token_type_ids=document_batch[doc_id][:self.bert_batch_size,1],
-                                            attention_mask=document_batch[doc_id][:self.bert_batch_size,2])[1])
+            print(type(self.bert(input_ids=document_batch[doc_id][:self.bert_batch_size,0],
+                                            attention_mask=document_batch[doc_id][:self.bert_batch_size,2])[0]))
+            bert_output[doc_id][:self.bert_batch_size] = self.dropout(self.bert(input_ids=document_batch[doc_id][:self.bert_batch_size,0],
+                                            attention_mask=document_batch[doc_id][:self.bert_batch_size,2])[0][:,0,:])
 
         output, (_, _) = self.lstm(bert_output.permute(1,0,2))
 

@@ -1,4 +1,4 @@
-# from pytorch_transformers.modeling_bert import BertPreTrainedModel
+from pytorch_transformers.modeling_bert import BertPreTrainedModel
 from transformers import DistilBertConfig, DistilBertModel
 from transformers import WEIGHTS_NAME, CONFIG_NAME
 from transformers import DistilBertTokenizer
