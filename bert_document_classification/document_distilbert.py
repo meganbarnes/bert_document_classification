@@ -21,8 +21,8 @@ def encode_documents(documents: list, tokenizer: DistilBertTokenizer, max_input_
     """
     tokenized_documents = [tokenizer.tokenize(document) for document in documents]
     max_sequences_per_document = math.ceil(max(len(x)/(max_input_length-2) for x in tokenized_documents))
-    assert max_sequences_per_document <= 20, "Your document is to large, arbitrary size when writing"
-
+    #assert max_sequences_per_document <= 20, "Your document is to large, arbitrary size when writing"
+    print("MAX SEQUENCES PER DOCUMENT", max_sequences_per_document)
     output = torch.zeros(size=(len(documents), max_sequences_per_document, 3, 512), dtype=torch.long)
     document_seq_lengths = [] #number of sequence generated per document
     #Need to use 510 to account for 2 padding tokens
@@ -129,7 +129,7 @@ class BertForDocumentClassification():
                                                                  self.args['model_directory'].split(os.path.sep)[-1]+'_'+self.args['architecture']+'_'+str(self.args['fold'])))
 
 
-        self.bert_doc_classification = document_bert_architectures[self.args['architecture']].from_pretrained(self.args['bert_model_path'], config=config)
+        self.bert_doc_classification = document_bert_architectures[self.args['architecture']](config) #.from_pretrained(self.args['bert_model_path'], config=config)
         self.bert_doc_classification.freeze_bert_encoder()
         self.bert_doc_classification.unfreeze_bert_encoder_last_layers()
 

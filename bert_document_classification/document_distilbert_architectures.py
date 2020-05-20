@@ -1,26 +1,39 @@
 from pytorch_transformers.modeling_bert import BertPreTrainedModel
 from transformers import DistilBertConfig, DistilBertModel, PretrainedConfig, PreTrainedModel
+from transformers import DistilBertForSequenceClassification
+from transformers import DistilBertForMaskedLM
 from torch import nn
 import torch
 from .transformer import TransformerEncoderLayer, TransformerEncoder
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 from torch.nn import LSTM
-class DocumentBertLSTM(DistilBertModel):
+class DocumentBertLSTM(nn.Module):
     """
     BERT output over document in LSTM
     """
 
     def __init__(self, bert_model_config: PretrainedConfig):
-        super(DocumentBertLSTM, self).__init__(bert_model_config)
-        self.bert = DistilBertModel.from_pretrained("/home/mrbarnes/bluebert/bluebert_train_output/")
+        super(DocumentBertLSTM, self).__init__()
+        self.bert = DistilBertModel.from_pretrained("/home/mrbarnes/models/bluebert_train_output/")
         self.bert_batch_size= bert_model_config.bert_batch_size
         self.dropout = nn.Dropout(p=bert_model_config.dropout)
+        self.pre_classifier = nn.Sequential(
+            nn.Linear(bert_model_config.hidden_size, bert_model_config.hidden_size),
+            nn.Tanh()
+        )
         self.lstm = LSTM(bert_model_config.hidden_size,bert_model_config.hidden_size)
         self.classifier = nn.Sequential(
             nn.Dropout(p=bert_model_config.dropout),
             nn.Linear(bert_model_config.hidden_size, bert_model_config.num_labels),
             nn.Tanh()
         )
+
+        for name, param in self.bert.named_parameters():
+            print(name)
 
     #input_ids, token_type_ids, attention_masks
     def forward(self, document_batch: torch.Tensor, document_sequence_lengths: list, device='cuda'):
@@ -37,8 +50,8 @@ class DocumentBertLSTM(DistilBertModel):
         for doc_id in range(document_batch.shape[0]):
             print(type(self.bert(input_ids=document_batch[doc_id][:self.bert_batch_size,0],
                                             attention_mask=document_batch[doc_id][:self.bert_batch_size,2])[0]))
-            bert_output[doc_id][:self.bert_batch_size] = self.dropout(self.bert(input_ids=document_batch[doc_id][:self.bert_batch_size,0],
-                                            attention_mask=document_batch[doc_id][:self.bert_batch_size,2])[0][:,0,:])
+            bert_output[doc_id][:self.bert_batch_size] = self.dropout(self.pre_classifier(self.bert(input_ids=document_batch[doc_id][:self.bert_batch_size,0],
+                                            attention_mask=document_batch[doc_id][:self.bert_batch_size,2])[0][:,0,:]))
 
         output, (_, _) = self.lstm(bert_output.permute(1,0,2))
 
@@ -59,7 +72,7 @@ class DocumentBertLSTM(DistilBertModel):
 
     def unfreeze_bert_encoder_last_layers(self):
         for name, param in self.bert.named_parameters():
-            if "encoder.layer.11" in name or "pooler" in name:
+            if "transformer.layer.5" in name or "pooler" in name:
                 param.requires_grad = True
     def unfreeze_bert_encoder_pooler_layer(self):
         for name, param in self.bert.named_parameters():
